@@ -56,11 +56,28 @@ body_18 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/BMX_J.XPT")
 
 
 # load fasting glucose data
-# only done on individuals 16 and older and not on every nhanes patient
+# only done on individuals 12 and older and not on every nhanes patient
 labs_12 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2011-2012/GLU_G.XPT")
 labs_14 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2013-2014/GLU_H.XPT")
 labs_16 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2015-2016/GLU_I.XPT")
 labs_18 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/GLU_J.XPT")
+
+
+
+
+# load glycohemoglobin data
+# only done on individuals 12 and older
+glycohemoglobin_00 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/1999-2000/LAB10.XPT")
+glycohemoglobin_02 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2001-2002/L10_B.XPT")
+glycohemoglobin_04 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/L10_C.XPT")
+glycohemoglobin_06 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GHB_D.XPT")
+glycohemoglobin_08 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2007-2008/GHB_E.XPT")
+glycohemoglobin_10 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2009-2010/GHB_F.XPT")
+glycohemoglobin_12 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2011-2012/GHB_G.XPT")
+glycohemoglobin_14 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2013-2014/GHB_H.XPT")
+glycohemoglobin_16 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2015-2016/GHB_I.XPT")
+glycohemoglobin_18 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/GHB_J.XPT")
+
 
 diabetes_all <- full_join(diabetes_00, diabetes_02) %>%
   full_join(diabetes_04) %>%
@@ -96,6 +113,16 @@ labs_all <- full_join(labs_12, labs_14) %>%
   full_join(labs_16) %>%
   full_join(labs_18)
 
+glycohemoglobin_all <- full_join(glycohemoglobin_00, glycohemoglobin_02) %>%
+  full_join(glycohemoglobin_04) %>%
+  full_join(glycohemoglobin_06) %>%
+  full_join(glycohemoglobin_08) %>%
+  full_join(glycohemoglobin_10) %>%
+  full_join(glycohemoglobin_12) %>%
+  full_join(glycohemoglobin_14) %>%
+  full_join(glycohemoglobin_16) %>%
+  full_join(glycohemoglobin_18)
+
 
 nhanes_all <- full_join(demo_all, diabetes_all, by = "SEQN") %>%
   full_join(body_all, by = "SEQN") %>%
@@ -122,7 +149,7 @@ y <- filter(nhanes_all, !is.na(WTSAF2YR))
 
 # Create new diabetes variable where answers that are not yes or no are eliminated
 nhanes_full <- nhanes_all %>%
-  rename(glucose = LBXGLU,
+  rename(fasting_glucose = LBXGLU,
          Age = RIDAGEYR,
          Weight_kg = BMXWT,
          Height_cm = BMXHT) %>%
@@ -135,7 +162,7 @@ nhanes_full <- nhanes_all %>%
                                      ifelse(RIDRETH1 == 5, "Other Race", NA)))),
          Child = ifelse(Age < 18, "Yes", "No"),
          BMI = Weight_kg / (Height_cm / 100)^2,
-         hba1c_diabetes = ifelse(glucose >= 126, 1, 0),
+         hba1c_diabetes = ifelse(fasting_glucose >= 126, 1, 0),
          Cycle = 2000 + (SDDSRVYR - 1) * 2)
 
 
