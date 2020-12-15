@@ -9,6 +9,7 @@
 #   - fasting glucose test: blood sugar level >= 126 mg/dl (7mmol/l)
 #   - random glucose test: blood sugar level >= 200
 #   - A1c test: >= 6.5%
+#   - or take antidiabetic medication
 
 
 ##### LOADING DATA #####
@@ -63,6 +64,10 @@ labs_16 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2015-2016/GLU_I.XPT")
 labs_18 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/GLU_J.XPT")
 
 
+# prescription medication data
+rx_14 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2013-2014/RXQ_RX_H.XPT")
+rx_16 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2015-2016/RXQ_RX_I.XPT")
+rx_18 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/RXQ_RX_J.XPT")
 
 
 # load glycohemoglobin data
@@ -123,16 +128,20 @@ glycohemoglobin_all <- full_join(glycohemoglobin_00, glycohemoglobin_02) %>%
   full_join(glycohemoglobin_16) %>%
   full_join(glycohemoglobin_18)
 
+rx_all <- full_join(rx_14, rx_16) %>%
+  full_join(rx_18)
 
 nhanes_all <- full_join(demo_all, diabetes_all, by = "SEQN") %>%
   full_join(body_all, by = "SEQN") %>%
   full_join(labs_all, by = "SEQN") %>%
+  full_join(rx_all, by = "SEQN") %>%
+  full_join(glycohemoglobin_all, by = "SEQN") %>%
   filter(SEQN %in% diabetes_all$SEQN)
 # fasting variable LBXGLU (fasting glucose level)
 # only asked in individuals 12 - 150 years who were examined in morning session
 
 
-y <- filter(nhanes_all, !is.na(WTSAF2YR))
+#y <- filter(nhanes_all, !is.na(WTSAF2YR))
 
 
 
@@ -162,8 +171,13 @@ nhanes_full <- nhanes_all %>%
                                      ifelse(RIDRETH1 == 5, "Other Race", NA)))),
          Child = ifelse(Age < 18, "Yes", "No"),
          BMI = Weight_kg / (Height_cm / 100)^2,
-         hba1c_diabetes = ifelse(fasting_glucose >= 126, 1, 0),
-         Cycle = 2000 + (SDDSRVYR - 1) * 2)
+         fast_diabetes = ifelse(fasting_glucose >= 126, 1, 0),
+         hba1c_diabetes = ifelse(LBXGH >= 6.5, 1, 0),
+         rx_diabetes = ifelse(str_detect(RXDRSC1, "^E10") | str_detect(RXDRSC1, "^E11"), 1, 0),
+         Cycle = 2000 + (SDDSRVYR - 1) * 2,
+         tot_diabetes = ifelse(told_diabetes == 1 | hba1c_diabetes == 1 | rx_diabetes == 1 | fast_diabetes == 1, 1, 0)) %>%
+  select(SEQN, Cycle, tot_diabetes, told_diabetes, fast_diabetes, fasting_glucose, hba1c_diabetes, LBXGH, rx_diabetes, RXDRSC1, 
+         Age, Male, Race, Child, BMI, Weight_kg, Height_cm, WTINT2YR, WTMEC2YR, )
 
 
 
