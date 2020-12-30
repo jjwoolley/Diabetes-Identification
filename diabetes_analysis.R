@@ -16,6 +16,7 @@
 library("haven")
 library("tidyverse")
 library("survey")
+library("tidymodels")
 
 # load diabetes questionnaire data
 diabetes_00 <- read_xpt("https://wwwn.cdc.gov/Nchs/Nhanes/1999-2000/DIQ.XPT")
